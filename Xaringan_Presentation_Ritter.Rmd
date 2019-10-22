@@ -15,11 +15,128 @@ output:
 
 ---            
 
+```{r setup, include=FALSE}
+library(flexdashboard)
+library(DT)
+library(tidyverse)
+library(ggplot2)
+library(stringi)
+library(reshape2)
+library(xlsx)
+library(readxl)
+library(shiny)
+  
+#Einlesen des ersten Stammdatensatzes und direktes selektieren und umbenennen der relevanten beiden Spalten:
+master_data_art <- read_excel("C:\\Users\\Ritter\\Desktop\\Studium\\2018_Master\\190904_M10-Programming Languages\\03_Assignment\\Assignment_5_PERI_Project\\Datenquellen\\Schlüssel_Article_Stammdaten.xlsx")
+master_data_art <- master_data_art[,c(2,7)]
+names(master_data_art)[names(master_data_art)=="Art_No (neu+geb) Text"] <- "master_data_art_no"
+names(master_data_art)[names(master_data_art)=="ArtNo_ArtBez Englisch"] <- "master_data_art_no_name"
+
+# Einlesen des zweiten Stammdatensatzes und direktes selektieren und ausgeben der relevanten beiden Spalten:
+master_data_PG <- read_excel("C:\\Users\\Ritter\\Desktop\\Studium\\2018_Master\\190904_M10-Programming Languages\\03_Assignment\\Assignment_5_PERI_Project\\Datenquellen\\Schlüssel_PG.xlsx")
+master_data_PG <- master_data_PG[,c(1,5)]
+names(master_data_PG)[names(master_data_PG)=="PG_Name English"] <- "PG_Name_English"
+master_data_PG %>% colnames()
+
+#Einlesen des dritten Stammdatensatzes und direktes selektieren und ausgeben der relevanten beiden Spalten:
+master_data_MU <- read_excel("C:\\Users\\Ritter\\Desktop\\Studium\\2018_Master\\190904_M10-Programming Languages\\03_Assignment\\Assignment_5_PERI_Project\\Datenquellen\\Schlüssel_Land+MU.xlsx")
+master_data_MU <- master_data_MU[,c(1,8)]
+names(master_data_MU)[names(master_data_MU)=="Land_ID_Zahl...1"] <- "Country_Primary_Key"
+names(master_data_MU)[names(master_data_MU)=="Market_Unit_Name...8"] <- "Market_Unit"
+master_data_MU %>% colnames()
+
+# Einlesen des vierten Datensatzes. Der Hauptdatensatensatz:
+MIP_0 <- read_csv2("C:\\Users\\Ritter\\Desktop\\Studium\\2018_Master\\190904_M10-Programming Languages\\03_Assignment\\Assignment_5_PERI_Project\\Datenquellen\\MIP_FA0_20190919_DaniFranz.csv")
+
+# Die Spaltennamen die mit "0_..." beginnen werden als allererste umbenannt, da R-Studio diese sonst im Ergänzungsvorschlag ungünstig einfügt:
+names(MIP_0)[names(MIP_0)=="0_COUNTRY"] <- "COUNTRY_PRIMARY_KEY"
+names(MIP_0)[names(MIP_0)=="0_COUNTRY_TEXT"] <- "COUNTRY"
+names(MIP_0)[names(MIP_0)=="0_PG_NO"] <- "PG_NO"
+names(MIP_0)[names(MIP_0)=="0_PG_NO_TEXT"] <- "PG_NO_TEXT"
+names(MIP_0)[names(MIP_0)=="0_ARTANKEY"] <- "ARTANKEY"
+names(MIP_0)[names(MIP_0)=="0_ARTICLE_NO_NEW"] <- "ARTICLE_NO_NEW"
+names(MIP_0)[names(MIP_0)=="0_ARTICLE_NO_USED"] <- "ARTICLE_NO_USED"
+names(MIP_0)[names(MIP_0)=="0_ARTICLE_NO_TEXT"] <- "ARTICLE_NO_TEXT"
+
+# Nun werden fehlerhaft zugeordnete Datenformate der einzelnen Spalten korrigiert:
+MIP_0$COUNTRY_PRIMARY_KEY <- as.character(MIP_0$COUNTRY_PRIMARY_KEY)
+MIP_0$ARTICLE_NO_NEW <- as.character(MIP_0$ARTICLE_NO_NEW)
+MIP_0$ARTICLE_NO_USED <- as.character(MIP_0$ARTICLE_NO_USED)
+MIP_0$USED_QTY_TOTAL <- as.numeric(MIP_0$USED_QTY_TOTAL)
+
+#In den nächsten Schritten könnnen die bereits eingelesenen Stammdatentabellen mit dem Hauptdatensatz verjoint werden:
+MIP_0$ArticleNoId <- as.numeric(MIP_0$ARTICLE_NO_USED)
+master_data_art$ArticleNoId <- as.numeric(master_data_art$master_data_art_no)
+MIP_0 <-left_join(MIP_0, master_data_art)
+
+MIP_0$PGNoId <- as.numeric(MIP_0$PG_NO)
+master_data_PG$PGNoId <- as.numeric(master_data_PG$PG_No_Zahl)
+MIP_0 <-left_join(MIP_0, master_data_PG)
+
+MIP_0$Country_ID <- as.numeric(MIP_0$COUNTRY_PRIMARY_KEY)
+master_data_MU$Country_ID <- as.numeric(master_data_MU$Country_Primary_Key)
+MIP_0 <-left_join(MIP_0, master_data_MU)
+
+# Datensatzreduktion
+MIP_0 = MIP_0[,!grepl("LC",names(MIP_0))]
+MIP_0 = MIP_0[,!grepl("FM",names(MIP_0))]
+MIP_0 = MIP_0[,!grepl("LP1",names(MIP_0))]
+MIP_0$master_data_art_no <- NULL
+MIP_0$ArticleNoId <- NULL
+MIP_0$PG_No_Zahl <- NULL
+MIP_0$PG_NO_TEXT <- NULL
+MIP_0$PGNoId <- NULL
+MIP_0$Country_ID <- NULL
+MIP_0$Country_Primary_Key <- NULL
+
+#Umsortieren des Datensatzes
+MIP_0 <- subset(MIP_0, select=c(33, 1:3,32,4:6,31,7:30))
+
+#Datenanpassungen
+#Auslastungswerte (also Mengen beim Kunden) in % auf der erste Nachkommastelle gerundet:
+MIP_0$USED_UTIL_LTM <- round(MIP_0$USED_UTIL_LTM,1)
+MIP_0$USED_UTIL_TODAY <-  round(MIP_0$USED_UTIL_TODAY,1)
+
+#Da PERI mit sechsstelligen Artikelnummern arbeitet die Teilweise mit "0" und Teilweise mit "1 oder 2" beginnen, werden über folgenden Befehl die Artikelnummern mit fehlender führender Null angepasst:
+MIP_0$ARTICLE_NO_NEW <- ifelse (nchar(MIP_0$ARTICLE_NO_NEW) == 5,paste0(0,MIP_0$ARTICLE_NO_NEW),MIP_0$ARTICLE_NO_NEW)
+
+# NA-Handling
+
+#Hinzufügen der landesspezifischen Artikelbezeichnungen im IsNa-Fall für Artikelnamen:
+MIP_0$master_data_art_no_name <- ifelse (is.na(MIP_0$master_data_art_no_name), MIP_0$ARTICLE_NO_TEXT, MIP_0$master_data_art_no_name)
+
+#Da die Masterdaten der Produktgruppen allumfassend sind, und IsNa für Produktgruppen auf landesspezifische, nicht relevante Produktgruppen schliepen lassen, werden die IsNa's der Produktgruppenbezeichnung einheitlich der Produktgruppe "Others" zugeordnet. 
+MIP_0$PG_Name_English <- ifelse (is.na(MIP_0$PG_Name_English), "OTHERS", MIP_0$PG_Name_English)
+
+#All diese Observations haben in irgendeiner Dataframespalte in einer/oder mehreren Wert-Variable Leerwerte. Diese NA Werte wurden fehlerhaft aus dem ERP-System von PERI ausgegeben. Um diese Datensätze für die weitere Analyse nicht zu verlieren, werden explizit die NA-Werte der Observations mit 0 ersetzt: -->
+MIP_0[is.na(MIP_0)] <- 0
+sum(is.na(MIP_0))
+
+#Verketten der beiden Spalten PG_Nummer und PG_Name zur besseren Übersicht:
+MIP_0$PG_Name_English <- str_c(MIP_0$PG_NO,"_",MIP_0$PG_Name_English)
+
+## Parametisierung
+
+#Damit der User weiss, welche Variablen in Frage kommen und um Eingabefehler zu vermeiden, werden die zunächst alle Möglichen String-Variablen des Datensatzes augegeben: -->
+cat("Possible Selling Countries:\n ",paste(sort(unique(MIP_0$COUNTRY)),collapse=", "),"\n\n")
+cat("Possible Receiving Market Units:\n ",paste(shQuote(sort(unique(MIP_0$Market_Unit)), type="sh"), collapse=", "))
+
+#write.csv(MIP_0, "MIP_0_Interim_Result.csv")
+
+MIP_0 <- MIP_0 %>% add_row(COUNTRY = "*no selection*")
+MIP_0 <- MIP_0 %>% add_row(Market_Unit = "*no selection*")
+
+
+# Erstellen eines Input Vectors für die Sidebar Optionen
+Sub_Sell_Name <- as.vector(sort(unique(MIP_0$COUNTRY)))
+Subs_Receiving <- as.vector(sort(unique(MIP_0$Market_Unit)))
+Sub_Receiving_Single <- as.vector(sort(unique(MIP_0$COUNTRY)))
+```
+
 class: left
 background-image: url("images/cool.png")
 
-# Project Approach
-
+# Project steps
 
 --
 
@@ -32,14 +149,27 @@ background-image: url("images/cool.png")
 
 
 3. Get used to Dashoard Coding in R (Shiny vs. Flex)
-
 --
 
-4. Matching - Create Flex-Dasboard with Interactive Shiny Elements
-
+4. Matching - Create Flex-Dasboard with Interactive Shiny Elements 
 --
 
-5. Setting up the Xaringan Presentation 
+
+5. Gather information in Presentation 
+--
+
+.pull-left[
+<img src="https://upload.wikimedia.org/wikipedia/commons/3/37/Clock.gif" width="226" height="226" />
+]
+--
+
+.pull-right[
+![](https://noktara.de/wp-content/uploads/phew.gif)
+
+]
+
+
+--
 
 ---
 
@@ -50,13 +180,13 @@ background-image: url("images/cool.png")
 
 <u>General:</u>
 
-- Join of 4 different data sources (3x masterdata (Country, ProductGroups, englisch ArticleNames), __Current stock data Worldwide__)
+- Join of 4 different data sources (3x masterdata (Country, ProductGroups, englisch ArticleNames), __current stock data worldwide__)
 
-- all subsidiaries in the PERI Group (54 Countries)
+- all subsidiaries in the PERI group (54 Countries)
 
-- all Articles of each subsidiary (on average ca. 1.500 Articles per Subsidiary)
+- all articles of each subsidiary (on average ca. 1.500 articles per subsidiary)
 
-- Grouping possibility of articles by Product Groups 
+- Grouping possibility of articles by Market Unit, Product Groups, etc.
 
 ]
 
@@ -72,33 +202,96 @@ background-image: url("images/cool.png")
 ***
 
 .center[
-__One analytical dataset, ca. 80.000 rows, ca. 35 columns__
+__One analytical dataset, ca. 70.000 rows, ca. 75 columns__
 ]
 ---
 # Step 1: Generating a datamodel
 
-```{r tx-wrangle, echo=TRUE}
-library(readr)
-# Einlesen des vierten Datensatzes. Der Hauptdatensatensatz:
-MIP_0 <- read_csv2("C:\\Users\\Ritter\\Desktop\\Studium\\2018_Master\\190904_M10-Programming Languages\\03_Assignment\\Assignment_5_PERI_Project\\Datenquellen\\MIP_FA0_20190919_DaniFranz.csv")
-
+Overview of all PERI Subsidiaries:
+```{r}
+{{All_PERI_Subs <- sort(unique(MIP_0$COUNTRY))}}
+All_PERI_Subs
 ```
 
 ---
 # Step 1: Generating a datamodel
 
-```{r tx-wrangle, highlight.output = 2}
-library(tidyverse)
+Overview of analytical dataset
+
+```{r}
 glimpse(MIP_0)
 ```
 
+
 ---
 
-# Step 2: Video of the r-Markdown File
+# Step 2: Overview of the r-Markdown file
 
 ![video](SourcePictures\\Video_RMD.gif)
 
 ---
+
+
+# Step 2: Example Graphic
+### Code
+
+```{r message=FALSE, warning=FALSE, paged.print=FALSE}
+
+number_articles <- MIP_0 %>% distinct() %>% count(COUNTRY) #<<
+number_articles <- rename(number_articles, 
+                          BubbleSize = n) #<<
+
+Total_Value <- MIP_0 %>% group_by(COUNTRY) %>% 
+        summarize(
+          Total_USED_HPC = sum(USED_TOTAL_EUR_HPC), 
+          Total_New_HPC = sum(NEW_TOTAL_EUR_HPC)
+        ) %>% arrange(desc(Total_USED_HPC))
+
+
+Total_Value <- left_join(Total_Value, number_articles)
+
+
+ggplot(data = Total_Value, aes(x = Total_USED_HPC, y = Total_New_HPC, 
+                               size = BubbleSize, #<<
+                               color = COUNTRY))+ 
+    geom_point(show.legend = FALSE) +
+    geom_text(aes(label = COUNTRY), col = "black", show.legend = FALSE, size = 4)+
+    scale_x_continuous(labels = scales::comma)+
+    scale_y_continuous(labels = scales::comma)+
+    theme_bw()
+```
+
+
+---
+
+
+# Step 2: Example Graphic
+### Result
+Overview of New-/Used Material Values (bubble size = number of different articles):
+
+
+.middle[
+```{r echo=FALSE, fig.height=6, fig.width=12, message=FALSE, warning=FALSE, comment=NA}
+number_articles <- MIP_0 %>% distinct() %>% count(COUNTRY)
+
+Total_Value <- MIP_0 %>% group_by(COUNTRY) %>% 
+        summarize(
+          Total_USED_HPC = sum(USED_TOTAL_EUR_HPC), 
+          Total_New_HPC = sum(NEW_TOTAL_EUR_HPC)
+        ) %>% arrange(desc(Total_USED_HPC))
+Total_Value <- left_join(Total_Value, number_articles)
+
+ggplot(data = Total_Value, aes(x = Total_USED_HPC, y = Total_New_HPC, size = n, color = COUNTRY))+
+    geom_point(show.legend = FALSE) +
+    geom_text(aes(label = COUNTRY), col = "black", show.legend = FALSE, size = 4)+
+    scale_x_continuous(labels = scales::comma)+
+    scale_y_continuous(labels = scales::comma)+
+    theme_bw()
+```
+]
+
+---
+
 # Step 3: Markdown vs. Shiny
 
 .pull-left[
@@ -107,7 +300,7 @@ flexdashboard
 - R Markdown
 - Super easy
 - Static or dynamic
-- CSS flexbox layout
+- CSS flexbox layout (?)
 
 ]
 
@@ -117,7 +310,7 @@ shinydashboard
 - Shiny UI code
 - Not quite as easy
 - Dynamic
-- Bootstrap grid layout
+- Bootstrap grid layout (?)
 
 ]
 .pull-left[
@@ -130,23 +323,167 @@ shinydashboard
 Due to the reason that the whole code was already done in r-Markdown the decision was to go with __flexdashboard__
 ]
 
+***
 
 .center[
 ![](data:image/jpeg;base64,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)
 ]
 
 ---
-background-image: url("SourcePictures\\Matching_Data_Flow.png")
-background-position: center
-background-size: 750px 570px
 
 # Step 4: Matching Logic
+
+.center[
+<img src="https://raw.githubusercontent.com/mr176/Matching_at_PERI/master/Matching_Data_Flow.png" width="750" height="570" />
+]
 
 ---
-class: center, middle
+
 # Step 4: Matching Logic
 
-__Let's take a look at the matching result... __
+__Difficulties during the Project__
+
+.pull-left[
+<u>Technical side:</u>
+
+- Bringing the data down to it's relevant values __keeping the overview in code__
+
+- changing code somewhere in the middle - consider _ALL_ subsequent effects
+
+- Multiple reactive tables combined with "what if szenario calculation with resulting new datatables"
+
+***
+
+Working in parallel: RMarkdown vs. RMD with reactive tables
+
+]
+
+.pull-left[
+<u>Business side:</u>
+- Meeting your own requirements: clear output picture made - hard to be satisfied
+
+- Meeting PERIs requirements: motivation to create a tool that is useful for the daily buisness
+
+- correct "handling" of non-matching articles (NA-values) and correct interpretation
+
+***
+
+Domain knowledge - with gut felling about the output
+
+]
+
+---
+# Small error - fatal effect 1/4
+
+<u>__Wrong Output:__</u>
+
+```{r}
+MU = c('MU CE', "MU MEA")
+Result <- MIP_0 %>% 
+  filter(Market_Unit == MU) %>% #<<
+  filter(ARTICLE_NO_NEW == "112359") %>% 
+  select(c(Market_Unit, COUNTRY, ARTICLE_NO_TEXT, NEW_QTY_TOTAL)) %>% 
+  arrange(Market_Unit, COUNTRY)
+knitr::kable(Result, format = 'html')
+```
+
+***
+
+.center[
+__1.000 - 10.000 rows as result in real coding environment...__
+]
+
+---
+# Small error - fatal effect 2/4
+
+<u>__Correct Output:__</u>
+
+```{r}
+MU = c('MU CE', "MU MEA")
+Result <- MIP_0 %>% 
+  filter(Market_Unit %in% MU) %>% #<<
+  filter(ARTICLE_NO_NEW == "112359") %>% 
+  select(c(Market_Unit, COUNTRY, ARTICLE_NO_TEXT, NEW_QTY_TOTAL)) %>% 
+  arrange(Market_Unit, COUNTRY)
+knitr::kable(Result, format = 'html')
+```
+
+***
+.center[
+__... small change - big difference__
+]
+
+---
+
+# Small error - fatal effect 3/4 
+
+.center[
+<img src="https://raw.githubusercontent.com/mr176/Matching_at_PERI/master/Error2.png" width="750" height="570" />
+]
+
+---
+
+# Small error - fatal effect 4/4
+
+.center[
+<img src="https://raw.githubusercontent.com/mr176/Matching_at_PERI/master/Error3.png" width="750" height="570" />
+]
+
+---
+
+# Dynamic Excel Export
+
+```{css}
+.red { color: red; }
+.green { color: green; }
+```
+
+- Last but not least: .red[**my favourite command:**]
+
+--
+
+- safe any result 
+ - in .green[__excel__]
+ - with a .green[__country specific__] name
+ - write down the .green[__time__] when the file was created (= timestamp)
+
+```markdown
+write.xlsx(Any_DF, file = paste0
+  ("Matching_", Sub_Sell_Name,"_",format(Sys.time(), "%Y-%m-%d_%H-%M"), ".xlsx")
+  ,sheetName = "Result_Matching")
+```
+
+***
+
+--
+
+.pull-left[
+<img src="https://raw.githubusercontent.com/mr176/Matching_at_PERI/master/Time_Stamp.png" width="400" height="35" />
+]
+
+
+.pull-right[
+<img src="http://bestanimations.com/Signs&Shapes/Hearts/heart-animation2.gif" width="100" height="100" />
+]
+
+---
+
+# Step 4: Matching Logic
+
+.center[
+__Let's take a look at the code... __
+
+__... and at the Flex-Dashbaord... __
+]
+
+***
+
+.center[
+
+Github - Repository:
+
+https://github.com/mr176/Matching_at_PERI
+
+]
 
 <!-- xaringan::inf_mr() -->
----

@@ -57,7 +57,7 @@ names(master_data_MU)[names(master_data_MU)=="Market_Unit_Name...8"] <- "Market_
 master_data_MU %>% colnames()
 ```
 
-Einlesen des vierten Datensatzes. Der Hauptdatensatensatz:
+Einlesen des vierten Datensatzes. Der Hauptdatensatz:
 ```{r}
 MIP_0 <- read_csv2("C:\\Users\\Ritter\\Desktop\\Studium\\2018_Master\\190904_M10-Programming Languages\\03_Assignment\\Assignment_5_PERI_Project\\Datenquellen\\MIP_FA0_20190919_DaniFranz.csv")
 ```
@@ -85,7 +85,8 @@ MIP_0$USED_QTY_TOTAL <- as.numeric(MIP_0$USED_QTY_TOTAL)
 ```
 
 ## Joins
-In den nächsten Schritten könnnen die bereits eingelesenen Stammdatentabellen mit dem Hauptdatensatz verjoint werden:
+
+In den nächsten Schritten können die bereits eingelesenen Stammdatentabellen mit dem Hauptdatensatz verjoint werden:
 ```{r}
 MIP_0$ArticleNoId <- as.numeric(MIP_0$ARTICLE_NO_USED)
 master_data_art$ArticleNoId <- as.numeric(master_data_art$master_data_art_no)
@@ -103,7 +104,7 @@ master_data_MU$Country_ID <- as.numeric(master_data_MU$Country_Primary_Key)
 MIP_0 <-left_join(MIP_0, master_data_MU)
 ```
 
-Zur Überpruefung werden die ersten 10 Zeilen des aktuellen Datensatzes ausgegeben:
+Zur Überprüfung werden die ersten 10 Zeilen des aktuellen Datensatzes ausgegeben:
 ```{r}
 MIP_0 %>% head(10)
 ```
@@ -156,7 +157,7 @@ MIP_0$USED_UTIL_LTM <- round(MIP_0$USED_UTIL_LTM,1)
 MIP_0$USED_UTIL_TODAY <-  round(MIP_0$USED_UTIL_TODAY,1)
 ```
 
-Da PERI mit sechsstelligen Artikelnummern arbeitet die Teilweise mit "0" und Teilweise mit "1 oder 2" beginnen, werden über folgenden Befehl die Artikelnummern mit fehlender führender Null angepasst:
+Da PERI mit sechsstelligen Artikelnummern arbeitet die Teilweise mit "0" und teilweise mit "1 oder 2" beginnen, werden über folgenden Befehl die Artikelnummern mit fehlender führender Null angepasst:
 ```{r}
 MIP_0$ARTICLE_NO_NEW <- ifelse (nchar(MIP_0$ARTICLE_NO_NEW) == 5,paste0(0,MIP_0$ARTICLE_NO_NEW),MIP_0$ARTICLE_NO_NEW)
 ```
@@ -178,12 +179,12 @@ Die Anzahl an NA über die verjointe Spalte der englischen Produktgruppenbezeich
 sum(is.na(MIP_0$PG_Name_English))
 ```
 
-Da die Masterdaten der Produktgruppen allumfassend sind, und IsNa für Produktgruppen auf landesspezifische, nicht relevante Produktgruppen schliepen lassen, werden die IsNa's der Produktgruppenbezeichnung einheitlich der Produktgruppe "Others" zugeordnet.
+Da die Masterdaten der Produktgruppen allumfassend sind, und IsNa für Produktgruppen auf landesspezifische, nicht relevante Produktgruppen schließen lassen, werden die IsNa's der Produktgruppenbezeichnung einheitlich der Produktgruppe "Others" zugeordnet.
 ```{r}
 MIP_0$PG_Name_English <- ifelse (is.na(MIP_0$PG_Name_English), "OTHERS", MIP_0$PG_Name_English)
 ```
 
-Zur Prüfung wird werden die Produktgruppen, damt ihrer Produktgruppennummern ausgegeben:
+Zur Prüfung wird werden die Produktgruppen, damit ihrer Produktgruppennummern ausgegeben:
 ```{r}
 MIP_0 %>% select (PG_NO, PG_Name_English) %>% mutate(PG_NO = as.numeric(PG_NO)) %>% distinct() %>% arrange(PG_NO)
 ```
@@ -248,14 +249,14 @@ MIP_0 %>% head(10)
 Nachdem das Dataset nun aufbereitet ist, kann begonnen werden erste Auswertungen zu erstellen. Dabei werden verschiedene Hierarchiestufen beleuchtet. 
 
 ## Landeslevel
-Zunächst soll gezählt werden, wieviele verschiedene Länder innerhalb des Datensatzes eingelesen wurden:
+Zunächst soll gezählt werden, wie viele verschiedene Länder innerhalb des Datensatzes eingelesen wurden:
 ```{r}
 MIP_0 %>% select(COUNTRY) %>% distinct(COUNTRY) %>% count()
 ```
 
 ## Exkurs
-Das selbe Ergebnis lässt sich in R-Markdown auch dierekt im Text implementieren.
-Dies ist sinnvoll um Auswertungen unterschiedlicher Datensaetze mit gleicher Struktur beliebig oft zu aktualisieren.
+Das selbe Ergebnis lässt sich in R-Markdown auch direkt im Text implementieren.
+Dies ist sinnvoll um Auswertungen unterschiedlicher Datensätze mit gleicher Struktur beliebig oft zu aktualisieren.
 Hier ein Beispiel:
 ---
 The number of different countries in the data set is `r MIP_0 %>% select(COUNTRY) %>% distinct(COUNTRY) %>% count()` .
@@ -275,7 +276,7 @@ number_articles <- rename(number_articles, Number_Art_In_Countries = n)
 number_articles
 ```
 
-Diese Tabelle wird nachfolgende grafisch Visualisiert. Dabei wird die obige Tabelle absteigend sortiert:
+Diese Tabelle wird nachfolgende grafisch visualisiert. Dabei wird die obige Tabelle absteigend sortiert:
 ```{r}
 ggplot(data = number_articles, aes(x=reorder(COUNTRY, (Number_Art_In_Countries)), y = Number_Art_In_Countries)) +
     geom_col(fill ="#ffc300") +
@@ -289,7 +290,7 @@ ggplot(data = number_articles, aes(x=reorder(COUNTRY, (Number_Art_In_Countries))
 
 ### Split nach Neu- und Gebrauchtartikel
 
-Im folgenden soll überprüft werden, wie das Verhältnis zwischen Neu- und Gebrauchtmengen auf Lager ist. 
+Im Folgenden soll überprüft werden, wie das Verhältnis zwischen Neu- und Gebrauchtmengen auf Lager ist. 
 Dafür muss zunächst eine neue Spalte erstellt und berechnet werden:
 ```{r}
 x <- MIP_0 %>% select(COUNTRY, USED_QTY_TOTAL, NEW_QTY_TOTAL)
@@ -299,14 +300,11 @@ x$Check <- ifelse(x$USED_QTY_TOTAL > 0 & x$NEW_QTY_TOTAL > 0, "both>0",
                   )
             )
 x <- x %>% select(COUNTRY,Check) %>% count(COUNTRY, Check)
-#x <- spread(x,Check,n)
-#x[is.na(x)] <- 0
-#x$total <- x$`both>0`+x$`new>0`+x$`used>0`
-#x <- x[order(-x$total),] 
+
 x
 ```
 
-Da im Anschluss das Ergebnis ernut visualisiert werden soll und hierfür eine Datenbeschriftung von nöten ist, wird zunächst die Y-Position der Datenbeschriftung berechnet:
+Da im Anschluss das Ergebnis erneut visualisiert werden soll und hierfür eine Datenbeschriftung von Nöten ist, wird zunächst die Y-Position der Datenbeschriftung berechnet:
 ```{r}
 x<- x %>%
   group_by(COUNTRY) %>% arrange(COUNTRY, desc(Check)) %>% mutate(ypos = cumsum(n) - 0.5 * n) 
@@ -336,7 +334,7 @@ Total_Value <- MIP_0 %>% group_by(COUNTRY) %>%
 Total_Value <- left_join(Total_Value, number_articles)
 ```
 
-Auch hier wird das Ergebnis wieder grafische Dargestellt:
+Auch hier wird das Ergebnis wieder grafisch dargestellt:
 ```{r}
 ggplot(data = Total_Value, aes(x = Total_USED_HPC, y = Total_New_HPC, size = Number_Art_In_Countries, color = COUNTRY)) +
     geom_point(show.legend = FALSE) +
@@ -345,13 +343,13 @@ ggplot(data = Total_Value, aes(x = Total_USED_HPC, y = Total_New_HPC, size = Num
     scale_y_continuous(labels = scales::comma)+
     theme_classic()
 ```
-Zu beachten ist, dass die Skalierungen sich um den Faktor 10 unterscheiden. Der Mietpark der PERI Gruppe ist also bei weitem Größer als der Neumaterialvorräte, wobei Deutschland den Größten Mietpark und USA die höchsten Vorräte besitzt.
+Zu beachten ist, dass die Skalierungen sich um den Faktor 10 unterscheiden. Der Mietpark der PERI Gruppe ist also bei weitem größer als der Neumaterialvorräte, wobei Deutschland den Größten Mietpark und USA die höchsten Vorräte besitzt.
 
 ## Analyse auf Artikellevel
 
-Nachdem nun bekannt ist, dass der Mietpark in der PERI-Gruppe Finanzseitig derartig wichtig ist, wird dieser im folgenden detaillierter analysiert. 
+Nachdem nun bekannt ist, dass der Mietpark in der PERI-Gruppe Finanzseitig derartig wichtig ist, wird dieser im Folgenden detaillierter analysiert. 
 
-Dabei wird auf die Spalte "Auslastung" im Datensatz zurückgegriffen. Diese spiegelt das Verhältnis zwischen Mietmaterial auf Lager und Mietmaterial beim Kunden wieder. Je höher die Auslastung, desto mehr Umsatz generiert PERI am Ende.
+Dabei wird auf die Spalte "Auslastung" im Datensatz zurückgegriffen. Diese spiegelt das Verhältnis zwischen Mietmaterial auf Lager und Mietmaterial beim Kunden wider. Je höher die Auslastung, desto mehr Umsatz generiert PERI am Ende.
 Die Auslastungen werden also mit den dazugehörenden Werten auf Artikelebene dargestellt.
 
 ### Market Unit Aggregation
@@ -382,9 +380,9 @@ ggplot(data = RentalArticles_MUAP, aes(y = USED_TOTAL_EUR_HPC, x = USED_UTIL_LTM
 ```{r}
 country_plot <- function(df, na.rm = TRUE){
   
-country <- unique(df$COUNTRY)   
-
-for (i in seq_along(country)) { 
+  country <- unique(df$COUNTRY)
+  
+  for (i in seq_along(country)) { 
 
   plot <- ggplot(subset(df, df$COUNTRY==country[i]), 
                  aes(y = USED_TOTAL_EUR_HPC, x = USED_UTIL_LTM)) + 
@@ -411,7 +409,7 @@ Examined_Article
 ```
 
 Mit der Tabelle kann nun eine Grafik erstellt werden.
-Zu beachten ist hier, das diese Grafik zwei Y-Achsen besitzt:
+Zu beachten ist hier, dass diese Grafik zwei Y-Achsen besitzt:
 
 1. eine Achse, welche den Wert des Artikels widerspiegelt
 1. eine Achse, welche die Auslastung (0-100%) je Land anzeigt
@@ -431,46 +429,45 @@ ggplot(Examined_Article)  +
 ```
 
 
-*Wertung des Ergebnisses:*
-Aus obiger Grafik geht schnell hervor, dass die Philippinen, diesen Artikel sehr gering ausgelastet haben, bei einem enorm hohen Lagerbestand.Südkorea und Hongkong haben dagegen eine hohe Auslastung des Artikels bei geringem Warenwert. Sollten diese beiden Länder zusätzliche Artikel benötigen, wäre es sinnvoll, nicht auf eine Neuproduktion des Artikels zu bauen, sondern darauf den Artikel von Philippinen abzukaufen.
-
+*Wertung des Ergebnisses: *
+Aus obiger Grafik geht schnell hervor, dass die Philippinen, diesen Artikel sehr gering ausgelastet haben, bei einem enorm hohen Lagerbestand. Südkorea und Hongkong haben dagegen eine hohe Auslastung des Artikels bei geringem Warenwert. Sollten diese beiden Länder zusätzliche Artikel benötigen, wäre es sinnvoll, nicht auf eine Neuproduktion des Artikels zu bauen, sondern darauf den Artikel von Philippinen abzukaufen.
 Derartige grafische Darstellung sind sicher hilfreich, um das Portfolio der PERI Gruppe zu analysieren und besser zu verstehen. Das Potential verschiedenartiger Darstellungen ist quasi endlos. 
 Allerdings beruhen diese Auswertungen auf empirische Analysen, bei welchen man bereits im Voraus wissen sollte, wie das Ergebnis aussehen könnte. 
 
 # Matching - Supply and Demand
 ## Einleitende Gedanken
 Problematik:
-Aus oben beschriebener Problematik, wird im folgenden Kapitel daher versucht, erstmalig eine andere Herangehenweise zur Portfolio-Analyse zu testen. Der Grundgedanke hierfür ist ein "Matching" wie man es aus anderen bereichen des Alltags kennt. 
+Aus oben beschriebener Problematik wird im folgenden Kapitel daher versucht, erstmalig eine andere Herangehensweise zur Portfolio-Analyse zu testen. Der Grundgedanke hierfür ist ein "Matching" wie man es aus anderen Bereichen des Alltags kennt. 
 
 Idee:
 Die Idee ist, einen Großteil des Datensatzes, welcher aktuell im Long-Format vorliegt, über Funktionen in R zu transformieren (Spread) und bestimmte KPIs die dann im Wide-Format vorliegen, an den noch bestehenden übrigen Teil des originären Datensatzes anzufügen.
 Somit könnten Länder automatisiert untereinander verglichen werden und Ähnlichkeiten innerhalb landesunabhängiger Portfolios berechnet werden.
 
 Ziel:
-Das Hauptziel des Matching ist, den Tochtergesellschaften algorithmusgesteuerte Empfehlungen zu geben, um Neu-Investitionen zu vermeiden.
-Zunächst sollen Tochtergellschaften im Bedarfsfall von Schwestergesellschaften Material beziehen und nicht bei der Mutterfirma eine Neuproduktion von langsamdrehenden Artikeln veranlassen.
+Das Hauptziel des Matching ist, den Tochtergesellschaften Algorithmus gesteuerte Empfehlungen zu geben, um Neu-Investitionen zu vermeiden.
+Zunächst sollen Tochtergellschaften im Bedarfsfall von Schwestergesellschaften Material beziehen und nicht bei der Mutterfirma eine Neuproduktion von langsam drehenden Artikeln veranlassen.
 
 Technische Lösung:
-Beim Matching des vorliegenden Datensatzes wäre man unabhängig einer Software zur Datentransformation. Erste Gehversuche in MS-Excel haben jeoch gezeigt, dass der Datensatz hierfür zu groß ist. Die Performance bestimmter Auswertungen in Excel leidet schwer unter der großen Datenmenge, was teilweise sogar zu Programmabstürzen führte.
+Beim Matching des vorliegenden Datensatzes wäre man unabhängig einer Software zur Datentransformation. Erste Gehversuche in MS-Excel haben jedoch gezeigt, dass der Datensatz hierfür zu groß ist. Die Performance bestimmter Auswertungen in Excel leidet schwer unter der großen Datenmenge, was teilweise sogar zu Programmabstürzen führte.
 
 Folgende Grafik stellt dar wie im Matching über nur wenige Filterparameter der Datensatz transformiert werden soll:
 
 ```{r tidy-gather, echo = FALSE, out.width = "100%", fig.cap = "Gathering `table4` into a tidy form."}
-knitr::include_graphics("C:\\Users\\Ritter\\Desktop\\Studium\\2018_Master\\190904_M10-Programming Languages\\03_Assignment\\Assignment_5_PERI_Project\\Datenquellen\\Matching_Data_Flow.jpg")
+knitr::include_graphics("C:\\Users\\Ritter\\Desktop\\Studium\\2018_Master\\190904_M10-Programming Languages\\03_Assignment\\Assignment_5_PERI_Project\\Datenquellen\\Matching_Data_Flow.png")
 ```
 
-Im Rahmen des Projektes wird das Matching ausschließlich auf Neumaterial getestet. Dabei wird als gedankenstrom "von Überbeständen zu Bedarfen" gewählt.
+Im Rahmen des Projektes wird das Matching ausschließlich auf Neumaterial getestet. Dabei wird als Gedanken Strom "von Überbeständen zu Bedarfen" gewählt.
 
-Die ähnliche Lösungen könnten über geringfügige Codanpassungen auch für Gebrauchtmaterial und für die gedankliche Richtung "von Bedarfen zu Überbeständen" gefunden werden (s. folgende Grafik).
+Die ähnliche Lösungen könnten über geringfügige Codeanpassungen auch für Gebrauchtmaterial und für die gedankliche Richtung "von Bedarfen zu Überbeständen" gefunden werden (s. folgende Grafik).
 
 ```{r echo = FALSE, out.width = "100%", fig.cap = "Gathering `table4` into a tidy form."}
 knitr::include_graphics("C:\\Users\\Ritter\\Desktop\\Studium\\2018_Master\\190904_M10-Programming Languages\\03_Assignment\\Assignment_5_PERI_Project\\Datenquellen\\Projektinhalt.jpg")
 ```
 
-## Parametisierung
+## Parametrisierung
 Zu Beginn sollen also die wenigen vom User geforderten Parameter eingegeben werden:
 
-Damit der User weiss, welche Variablen in Frage kommen und um Eingabefehler zu vermeiden, werden die zunächst alle Möglichen String-Variablen des Datensatzes augegeben:
+Damit der User weiß, welche Variablen in Frage kommen und um Eingabefehler zu vermeiden, werden die zunächst alle Möglichen String-Variablen des Datensatzes ausgegeben:
 ```{r}
 cat("Possible Selling Countries:\n ",paste(sort(unique(MIP_0$COUNTRY)),collapse=", "),"\n\n")
 cat("Possible Receiving Market Units:\n ",paste(shQuote(sort(unique(MIP_0$Market_Unit)), type="sh"), collapse=", "))
@@ -482,7 +479,7 @@ Sub_Sell_Name = "Germany"
 Sub_Sell_PG = c(1:99)      #Integers between 1:99
 Sub_Sell_IC_MORE <- 4   #Integers between 0:100   
 
-Subs_Receiving = c('MU MEA', "MU AP")
+Subs_Receiving = c('MU CE')
 Subs_Rec_IC_Less <- 4
 ```
 
@@ -493,7 +490,7 @@ Die oben eingegebenen Variablen "Sub_Sell_Name" und "Subs_Receiving" sind also d
 * Lagerreichweite in Monaten (=Performance KPI) im empfangenden Land besser als x-Monate (Subs_Rec_IC_Less) 
 
 
-## Datensatzaufbereitung - Verkäuferpperspektive
+## Datensatzaufbereitung – Verkäuferperspektive
 Im nächsten Schritt wird der Datensatz für das definierte abgebende Land aufbereitet.
 In den folgenden Codezeilen werden also die möglichen abzugebenden Artikel basierend auf dynamischen "Sub-Sell"-Eingaben in den Parametern berechnet:
 ```{r}
@@ -508,11 +505,11 @@ Sell_Articles <- MIP_0 %>% filter(COUNTRY == Sub_Sell_Name, PG_Name_English %in%
                     NEW_INVENTORY_COVERAGE_TODAY, NEW_AVG_DISPOSALS_LTM_PCS, NEW_TOTAL_EUR_LPT))
 ```
 
-Nun ist zuberücksichtigen, dass landesspezifische Artikel einer PERI-Tochter NICHT Teil der Analyse sein dürfen. Diese Artikel sind zwar aus finanzieller Sicht durchaus von Relevanz, können aber nicht an andere Tochtergesellschaften abgegeben werden. Diese werden im folgenden Code zunäcsht gesondert dargestellt und schließlich herausgefiltert:
+Nun ist zu berücksichtigen, dass landesspezifische Artikel einer PERI-Tochter NICHT Teil der Analyse sein dürfen. Diese Artikel sind zwar aus finanzieller Sicht durchaus von Relevanz, können aber nicht an andere Tochtergesellschaften abgegeben werden. Diese werden im folgenden Code zunächst gesondert dargestellt und schließlich herausgefiltert:
 
 Fachliche Anmerkung: Bei PERI beginnen alle landesspezifischen Artikelnummern mit "2,6,7 oder 8".
 ```{r}
-#Erstellen einer neuen Variable innerhalb des bereits bestehenden Datensatzes
+#Erstellen einer neuen Variablen innerhalb des bereits bestehenden Datensatzes
 Sell_Articles$Standard_vs_Local <- ifelse (as.integer(Sell_Articles$ARTICLE_NO_NEW) > 200000, "Local" , "Standard")
 
 #Erstellen eines neuen Dataframes zur späteren möglichkeit der Analyse:
@@ -522,14 +519,12 @@ Sell_Articles_Std_vs_Local <- Sell_Articles %>% group_by(Standard_vs_Local) %>% 
   )
 Sell_Articles_Std_vs_Local <- Sell_Articles_Std_vs_Local %>%  mutate(LPT_in_Percent = round(Split_Value_LPT/sum(Split_Value_LPT),3))
 
-
 Sell_Articles_Std_vs_Local <- subset(Sell_Articles_Std_vs_Local, select= c(1,2,4,3))
 Sell_Articles_Std_vs_Local
 
 #Wegfiltern lokaler Artikel im originären Datensatz
 Sell_Articles <- Sell_Articles %>% filter(Standard_vs_Local == "Standard")
 ```
-
 
 Schließlich können resultierende Summenwerte berechnet und ausgegeben werden:
 ```{r}
@@ -538,7 +533,6 @@ Sell_Volume_LPT <- sum(Sell_Articles$NEW_TOTAL_EUR_LPT)
 Sell_Volume_LPT2 <- paste(format(round(Sell_Volume_LPT / 1e3, 0), trim = TRUE), "tEUR")
 Sell_Count_Art <- sum(complete.cases(Sell_Articles))
 ```
-
 
 Das Ergebnis der maximal möglichen Abverkaufsartikel / Abverkaufsvolumen wird formatiert ausgegeben:
 ```{r}
@@ -550,46 +544,50 @@ cat("Defined Sell Volume in EUR LPT:\n ", format(Sell_Volume_LPT, big.mark=".",
 ```
 
 ## Datensatzaufbereitung - Empfängerperspektive
-Im ersten Schritt der berechnung Empfängerperspektive wird auf mögliche Käuferländer basierend auf dynamischen "Subs-Receiving"-Eingaben gefiltert. Dannach werden die Lagerbestände aus dem abgebenden Land zu den Lagerbeständen der potentiellen Empfänger hinzugefügt. Somit wird eine kalkulatorische neue Lagerreichweite des potentiellen Empfängerlandes berechnet:
+Im ersten Schritt der Berechnung Empfängerperspektive wird auf mögliche Käuferländer basierend auf dynamischen "Subs-Receiving"-Eingaben gefiltert. Danach werden die Lagerbestände aus dem abgebenden Land zu den Lagerbeständen der potentiellen Empfänger hinzugefügt. Somit wird eine kalkulatorische neue Lagerreichweite des potentiellen Empfängerlandes berechnet:
 ```{r}
 #Filtern des Gesamtdatensatzes
 Receiving_List_Total <- MIP_0 %>% 
-  filter(Market_Unit == Subs_Receiving, COUNTRY != Sub_Sell_Name, NEW_INVENTORY_COVERAGE_TODAY< Subs_Rec_IC_Less) %>% 
+  filter(Market_Unit %in% Subs_Receiving) %>% 
+  filter(COUNTRY != Sub_Sell_Name) %>% 
+  filter(NEW_INVENTORY_COVERAGE_TODAY< Subs_Rec_IC_Less) %>% 
+  filter(NEW_INVENTORY_COVERAGE_TODAY> 0) %>% 
   select(c(COUNTRY, ARTICLE_NO_NEW, ARTICLE_EUR_LPT, NEW_QTY_TOTAL, 
            NEW_TOTAL_EUR_LPT, NEW_INVENTORY_COVERAGE_TODAY, NEW_AVG_DISPOSALS_LTM_PCS))
 
 #Verknüpfen der Verkaufsmengen mit den Beständen in den potentiellen Käuferländern
-Receiving_List_Total <- right_join(Receiving_List_Total, Sell_Articles, by = "ARTICLE_NO_NEW", suffix = c("", ".sell"))
+Receiving_List_Total <- left_join(Receiving_List_Total, Sell_Articles, by = "ARTICLE_NO_NEW", suffix = c("", ".sell"))
 
-#Berechnen des theoretischen neuen Bestandes im Käuferland in Stück
-Receiving_List_Total$QTY_Calc <- Receiving_List_Total$NEW_QTY_TOTAL + Receiving_List_Total$NEW_QTY_TOTAL.sell
+Receiving_List_Total <- Receiving_List_Total[order(as.integer(Receiving_List_Total$ARTICLE_NO_NEW)),]   
 
-#Berechnen des theoretischen neuen Bestandes im Käuferland in Wert
+# #Berechnen des theoretischen neuen Bestandes im Käuferland in Stück
+ Receiving_List_Total$QTY_Calc <- Receiving_List_Total$NEW_QTY_TOTAL + Receiving_List_Total$NEW_QTY_TOTAL.sell
+#   
+# # #Berechnen des theoretischen neuen Bestandes im Käuferland in Wert
 Receiving_List_Total$LPT_Calc <- Receiving_List_Total$QTY_Calc * Receiving_List_Total$ARTICLE_EUR_LPT
-
-#Berechnen einer theoretischen Inventory Coverage:
+#   
+# # #Berechnen einer theoretischen Inventory Coverage:
 Receiving_List_Total$IC_Calc <- Receiving_List_Total$QTY_Calc/Receiving_List_Total$NEW_AVG_DISPOSALS_LTM_PCS
- 
-# Dummycodierung, wenn keine Abgänge in den LTM
+#  
+# # Dummycodierung, wenn keine Abgänge in den LTM
 Receiving_List_Total$IC_Calc <- ifelse (is.infinite(Receiving_List_Total$IC_Calc), -1 , Receiving_List_Total$IC_Calc)
-
-#Berechnen des theoretischen neuen Bestandes im Käuferland in Wert
-Receiving_List_Total$LPT_AVG_DispoEUR <- Receiving_List_Total$ARTICLE_EUR_LPT * Receiving_List_Total$NEW_AVG_DISPOSALS_LTM_PCS
-
-##Löschen nicht mehr benötigter Spalten:
-  #Receiving_List_Total = Receiving_List_Total[,!grepl(".sell",names(Receiving_List_Total))]
-
-#Löschen von Zeilen, welche über den Right_Join des abgebenden Landes hinzugekommen sind:
-Receiving_List_Total <- Receiving_List_Total[!is.na(Receiving_List_Total$COUNTRY),]
+# 
+# # # Dummycodierung, wenn Artikel vom Käufer zwar benötigt, vom Verkäufer aber nicht angeboten wird
+Receiving_List_Total$IC_Calc <- ifelse (is.na(Receiving_List_Total$IC_Calc), -4 , Receiving_List_Total$IC_Calc)
  
-##Sortieren des Datensatzes:
-  #Receiving_List_Total <- subset(Receiving_List_Total, select=c(1,8,2,9,3,4,10,5,11,7,6,12))
-
+#Berechnen der Avg Disposals in EUR
+Receiving_List_Total$LPT_AVG_DispoEUR <- Receiving_List_Total$ARTICLE_EUR_LPT * Receiving_List_Total$NEW_AVG_DISPOSALS_LTM_PCS
+ 
+# #Sortieren nach Artikelnummer
+Receiving_List_Total <- Receiving_List_Total[order(as.integer(Receiving_List_Total$ARTICLE_NO_NEW)),]
+  
+ 
+#Receiving_List_Total <- Receiving_List_Total %>% filter(Receiving_List_Total$ARTICLE_NO_NEW =="010360")
 Receiving_List_Total
 ```
 
 ### Pivotieren des der Empfängerseite
-Relevante Ereebnisspalten der aufbereiteten Käuferliste werden in den folgenden 3 Code-Junks über den spread Befehl transformiert:
+Relevante Ergebnisspalten der aufbereiteten Käuferliste werden in den folgenden 3 Code-Junks über den spread Befehl transformiert:
 
 1. Pivotieren der KPI - InventoryCoverage_Calc
 ```{r}
@@ -598,7 +596,9 @@ Receiving_IC <- Receiving_List_Total %>% select(c(COUNTRY, ARTICLE_NO_NEW, IC_Ca
 Receiving_IC <- spread(Receiving_IC, COUNTRY, IC_Calc)   #Pivotieren
 colnames(Receiving_IC) <- paste(colnames(Receiving_IC), sep = "_","IC_Calc")    #Umbenennen der Spaltennamen
 names(Receiving_IC)[names(Receiving_IC)=="ARTICLE_NO_NEW_IC_Calc"] <- "ARTICLE_NO_NEW"
-Receiving_IC[is.na(Receiving_IC)] <- -2#möglich aber nicht nötig
+Receiving_IC[is.na(Receiving_IC)] <- -2
+
+#Receiving_IC <- Receiving_IC %>% filter(Receiving_IC$ARTICLE_NO_NEW =="026649")
 Receiving_IC
 ```
 
@@ -608,7 +608,8 @@ Receiving_Value <- Receiving_List_Total %>% select(c(COUNTRY, ARTICLE_NO_NEW, NE
 Receiving_Value <- spread(Receiving_Value, COUNTRY, NEW_TOTAL_EUR_LPT)   #Pivotieren
 colnames(Receiving_Value) <- paste(colnames(Receiving_Value), sep = "_","LPT")    #Umbenennen der Spaltennamen
 names(Receiving_Value)[names(Receiving_Value)=="ARTICLE_NO_NEW_LPT"] <- "ARTICLE_NO_NEW"
-Receiving_Value[is.na(Receiving_Value)] <- 0   #möglich aber nicht nötig
+Receiving_Value[is.na(Receiving_Value)] <- 0 
+#Receiving_Value <- Receiving_Value %>% filter(Receiving_Value$ARTICLE_NO_NEW =="026649")
 Receiving_Value
 ```
 
@@ -618,7 +619,7 @@ Receiving_QTY <- Receiving_List_Total %>% select(c(COUNTRY, ARTICLE_NO_NEW, NEW_
 Receiving_QTY <- spread(Receiving_QTY, COUNTRY, NEW_QTY_TOTAL)   #Pivotieren
 colnames(Receiving_QTY) <- paste(colnames(Receiving_QTY), sep = "_","QTY")    #Umbenennen der Spaltennamen
 names(Receiving_QTY)[names(Receiving_QTY)=="ARTICLE_NO_NEW_QTY"] <- "ARTICLE_NO_NEW"
-#Receiving_QTY[is.na(Receiving_QTY)] <- 0   #möglich aber nicht nötig
+Receiving_QTY[is.na(Receiving_QTY)] <- 0
 
 #Berechnung Gesamtsumme von Stück Bestand aus ALLEN abgebenden Ländern:
 Receiving_QTY$Total_QTY_Rec <- rowSums(Receiving_QTY[,grep('_QTY', names(Receiving_QTY))], na.rm=TRUE)
@@ -636,11 +637,11 @@ names(Sell_Articles)[names(Sell_Articles) == "NEW_AVG_DISPOSALS_LTM_PCS"] <- pas
 ```
 
 ## Joining beider Richtungen - Tabellarische Ausgabe
-Im vorletzen Schritt können die beiden entstandenen Datensets miteinander Verknüpft werden. Das Verjoinen von Selling-/ und Receiving Articlesund ggf. ein direktes Sortieren der Spaltennamen geschieht über folgenden Befehl:
+Im vorletzten Schritt können die beiden entstandenen Datensets miteinander Verknüpft werden. Das Verjoinen von Selling-/ und Receivingarticles und ggf. ein direktes Sortieren der Spaltennamen geschieht über folgenden Befehl:
 ```{r}
 #Joins der Receiving_Datasets
-  Selling_Match <- full_join(Receiving_IC, Receiving_Value, by = "ARTICLE_NO_NEW")
-  Selling_Match <- full_join(Selling_Match, Receiving_QTY, by = "ARTICLE_NO_NEW")
+  Selling_Match <- left_join(Receiving_IC, Receiving_Value, by = "ARTICLE_NO_NEW")
+  Selling_Match <- left_join(Selling_Match, Receiving_QTY, by = "ARTICLE_NO_NEW")
 
 ##Umsortieren der Spalten - nach Rücksprache PERI nicht nötig.
     #names(Selling_Match)[names(Selling_Match)=="ARTICLE_NO_NEW"] <- "aaa_ARTICLE_NO_NEW"
@@ -699,15 +700,17 @@ Sell_Match4 <- left_join (Sell_Match4,Sell_Match3, by = "Key")
 Sell_Match4 <- left_join (Sell_Match4,MIP_0_Disposal, by = "Key")
 Sell_Match4[is.na(Sell_Match4)] <- 0
 
-Sell_Match4 <- Sell_Match4 %>% filter(-1 < IC_Calc, IC_Calc < Subs_Rec_IC_Less ) %>%  group_by(COUNTRY) %>% 
-   summarise(LPT_EUR_before = sum(LPT),
-             LPT_EUR_Match = sum(Germany_NEW_TOTAL_EUR_LPT),
-             LPT_EUR_after = LPT_EUR_before + LPT_EUR_Match, 
-             IC_before = round(LPT_EUR_before/sum(LPT_AVG_DispoEUR),2),
-             IC_after = round(LPT_EUR_after/sum(LPT_AVG_DispoEUR),2),
-             y_pos_lab = LPT_EUR_before+(LPT_EUR_Match/2)
-             )
+
+Sell_Match4 <- Sell_Match4 %>% filter(-1 < IC_Calc, IC_Calc < Subs_Rec_IC_Less ) %>% group_by(COUNTRY) %>% 
+    summarise(LPT_EUR_before = sum(LPT),
+              LPT_EUR_Match = sum(Germany_NEW_TOTAL_EUR_LPT),
+              LPT_EUR_after = LPT_EUR_before + LPT_EUR_Match, 
+              IC_before = round(LPT_EUR_before/sum(LPT_AVG_DispoEUR),2),
+              IC_after = round(LPT_EUR_after/sum(LPT_AVG_DispoEUR),2),
+              y_pos_lab = LPT_EUR_before+(LPT_EUR_Match/2)
+              )
 Sell_Match4$LPT_EUR_Match2 <- paste(format(round(Sell_Match4$LPT_EUR_Match / 1e3, 0), trim = TRUE), "tEUR")
+Purchasing_Match <- Sell_Match4
 Sell_Match4
 ```
 
@@ -748,24 +751,20 @@ ggplot(Sell_Match4) +
 Speichern des Ergebnisses im Excelformat mit Landes-/Datumspezifischer Titelbezeichnung:
 ```{r}
 write.xlsx(Sell_Match4, file = paste0("Matching_", Sub_Sell_Name,"_",format(Sys.time(), "%Y-%m-%d_%H-%M"), ".xlsx"),sheetName = "Result_Matching")
+```
+
+```{r}
 #write.csv(Selling_Match, "Selling_Match.csv")
 ```
+
 
 ## Fazit
 Im hier durchgeführten Projekt wurden verschiedene Datensätze eingelesen, darauf aufbauend Berechnungen durchgeführt und die Ergebnisse aus verschiedenen Blickrichtungen visualisiert.
 
 Bisher werden vergleichbare Analysen bei PERI mit manuellen Datenuploads in Microsoft Excel und VBA durchgeführt.
 
-Dabei ist die Performance, die MS Excel und R liefern nicht zu vergleichen. Die Erfahrungen im Projekt haben eindrücklich gezeigt, dass R um ein vielfaches schneller arbeitet und dabei signifikant stabiler läuft.
+Dabei ist die Performance, die MS Excel und R liefern nicht zu vergleichen. Die Erfahrungen im Projekt haben eindrücklich gezeigt, dass R um ein Vielfaches schneller arbeitet und dabei signifikant stabiler läuft.
 
-Zugegebenermaßen ist das coding mit R anfangs zeitaufwändig: Man muss zunächst mit der neuen Syntax und den neuen Coding-Strukturen in R vertraut werden. Allwerdings kann sich dieser Aufwand bereits nach kurzer Zeit durch oben genannte Performance Vorteile rechnen.
+Zugegebenermaßen ist das coding mit R anfangs zeitaufwändig: Man muss zunächst mit der neuen Syntax und den neuen Coding-Strukturen in R vertraut werden. Allerdings kann sich dieser Aufwand bereits nach kurzer Zeit durch oben genannte Performance Vorteile rechnen.
 
-Zudem können sich neue Möglichkeiten ergeben, an welche bisher gar nicht gedacht wurde. Hier wäre die Möglichkeit zur automatisierten Datenanbindung an PERI-Quellysteme exemplarisch zu nennen, welcher in Excel nicht oder zumindest nur bedingt umsetzbar ist.
-
-
-
-
-
-
-
-
+Zudem können sich neue Möglichkeiten ergeben, an welche bisher gar nicht gedacht wurde. Hier wäre die Möglichkeit zur automatisierten Datenanbindung an PERI-Quellsysteme exemplarisch zu nennen, welche in Excel nicht oder zumindest nur bedingt umsetzbar ist.
